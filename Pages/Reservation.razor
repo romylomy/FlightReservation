@@ -1,0 +1,272 @@
+﻿@page "/reservation"
+
+<div class="d-flex justify-content-center">
+    <h3>Reservation Finder</h3>
+</div>
+
+<div class="container">
+    <div class="row">
+
+        <div class="col-md-4">
+            <!-- Label for code selection -->
+            <label for="Code-select" class="Code-label d-block">Code:</label>
+            <!-- Input field for selected code -->
+            <input type="text" id="name" class="form-control" @bind="@selectedCode" />
+
+        </div>
+
+        <div class="col-md-4">
+            <!-- Label for airline selection -->
+            <label for="Airline-select" class="Airline-label d-block">Airline:</label>
+            <!-- Select field for selected airline -->
+            <select id="from-select" @bind="selectedAirline" class="form-select d-block">
+                <option value="">--Select Airline--</option>
+                <!-- Iterate over list of airports and display each airline as an option in select field -->
+                @foreach (var airport in airports)
+                {
+                    <option>@airport.Airline </option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-4">
+            <!-- Label for name selection -->
+            <label for="Name-select" class="Name-label d-block">Name:</label>
+            <!-- Input field for selected name -->
+            <input type="text" id="name" class="form-control" @bind="@selectedName" />
+
+        </div>
+
+        <div class="col-md-4">
+            <!-- Button to trigger reservation search -->
+            <button @onclick="findReservation">Find Reservation</button>
+        </div>
+        <div class="col-md-4">
+            <!-- Label for reservation selection -->
+            <label for="Reservation-select" class="Reservation-label d-block">Reservation:</label>
+            <!-- Select field for selected reservation -->
+            <select id="Reservation-select" @bind="ReservationSelection" class="form-select d-block">
+                <option value="">--Select Reservation--</option>
+                <!-- Iterate over list of bookings and display each matching reservation as an option in select field -->
+                @foreach (var booking in bookings.Where(b => b.ReservationCode == selectedCode && b.Airline == selectedAirline && b.PassengerName == selectedName))
+                {
+                    <option>@($"{booking.ReservationCode}, {booking.Citizenship}, {booking.PassengerName}, {booking.FlightCode}, {booking.Airline}, {booking.Price}")</option>
+                }
+            </select>
+        </div>
+    </div>
+    <!-- Fields to display reservation details -->
+     <label for="flight-code">Reservation Code:</label>
+    <input type="text" id="flight-code" class="form-control" value="@textReservationCode" readonly />
+
+    <label for="flight-code">Flight Code:</label>
+    <input type="text" id="flight-code" class="form-control" value="@textflightcode" readonly />
+
+    <label for="flight-Airline">Airline:</label>
+    <input type="text" id="flight-Airline" class="form-control" value="@textAirline" readonly />
+
+    <label for="flight-day">Day:</label>
+    <input type="text" id="flight-day" class="form-control" value="@textDay" readonly />
+
+    <label for="flight-time">Time:</label>
+    <input type="text" id="flight-time" class="form-control" value="@texthour" readonly />
+
+    <label for="flight-cost">Cost:</label>
+    <input type="text" id="flight-cost" class="form-control" value="@textcost" readonly />
+
+    <label for="name">Name:</label>
+    <input type="text" id="name" class="form-control" @bind="@textPassengerName" />
+
+    <label for="citizenship">Citizenship:</label>
+    <input type="text" id="citizenship" class="form-control" @bind="@textCitizenship" />
+        <!-- Dropdown to select status -->
+    <div class="col-md-4">
+        <label for="day-select" class="form-label d-block">Status:</label>
+        <select id="day-select" @bind="selectedstatus" class="form-select d-block">
+            <option value="">--Select Status--</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+        </select>
+    </div>
+
+    <!-- Button to save reservation -->
+    <div class="d-flex justify-content-center">
+        <button @onclick="ReservationManager">Save</button>
+    </div>
+</div>
+
+
+@code {
+    private string ReservationSelection;
+    private string selectedCode;
+    private string selectedName;
+    private string selectedAirline;
+    private string ReservationCode; 
+    private List<Airport> airports;
+    private List<booking> bookings = new();
+    private string textReservationCode; 
+    private string textflightcode;
+    private string textAirline;
+    private string textTo;
+    private string textFrom;
+    private string textDay;
+    private string texthour;
+    private string textcost;
+    private string textMaxseats;
+    private string textPassengerName;
+    private string textCitizenship;
+    private string selectedstatus;
+
+
+
+     // This method is called when the component is initialized.
+    protected override async Task OnInitializedAsync()
+    {
+        airports = new List<Airport>();
+
+        try
+        {
+            // Read the flights data from a CSV file.
+            using (var reader = new StreamReader(@"C:\Users\user\Desktop\Updated_Assignment 2- Event Driven Applications and Exception Handling\flights.csv"))
+            {
+                while (!reader.EndOfStream)
+                {
+                    var line = await reader.ReadLineAsync();
+                    var values = line.Split(',');
+
+                    // Add the airline to the list of airports.
+                    airports.Add(new Airport
+                    {
+                        Airline = values[1]
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+   
+    }
+    private async Task findReservation()
+    {
+        bookings = new List<booking>();
+
+        try
+        {
+            // Read the flights data from a CSV file located at the specified path.
+            using (var reader = new StreamReader(@"C:\Users\user\Desktop\Updated_Assignment 2- Event Driven Applications and Exception Handling\flights.csv"))
+            {
+                // Read each line of the CSV file.
+                while (!reader.EndOfStream)
+                {
+                    // Read a line from the CSV file.
+                    var line = await reader.ReadLineAsync();
+
+                    // Split the line into its values, separated by commas.
+                    var values = line.Split(',');
+
+                    // Add the airline to the list of airports.
+                    airports.Add(new Airport
+                        {
+                            Airline = values[1]
+                        });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // If an exception occurs while reading the CSV file, print an error message to the console.
+            Console.WriteLine(ex.Message);
+        }
+    }
+    private void ParseString()
+    {
+        if (!string.IsNullOrEmpty(ReservationSelection))
+        {
+            // Split the input string by comma
+            var parts = ReservationSelection.Split(',');
+
+            // Get the flight number and to airport
+            textReservationCode = parts[0];
+            textflightcode = parts[1];
+            textAirline = parts[2];
+            textTo = parts[3];
+            textFrom = parts[4];
+            textDay = parts[5];
+            texthour = parts[6];
+            textMaxseats = parts[7];
+            textcost = parts[8];
+
+        }
+    }
+
+    private void ReservationManager()
+    {
+
+        booking reservation = new booking
+            {
+                ReservationCode = textReservationCode,
+                PassengerName = textPassengerName,
+                Citizenship = textCitizenship,
+                FlightCode = textflightcode,
+                Airline = textAirline,
+                To = textTo,
+                From = textFrom,
+                Day = textDay,
+                Hour = texthour,
+                Maxseats = int.Parse(textMaxseats),
+                Price = double.Parse(textcost),
+                Status = selectedstatus
+
+
+            };
+        string filePath = @"C:\Users\user\Desktop\Updated_Assignment 2- Event Driven Applications and Exception Handling\reservations.csv";
+        var lines = File.ReadAllLines(filePath).ToList();
+        // Determine the index of the line to modify
+        var index = lines.FindIndex(line => line.StartsWith(reservation.ReservationCode));
+
+        if (index >= 0)
+        {
+            // Modify the existing line
+            if (reservation.Status == "Inactive")
+            {
+                // If the reservation is inactive, delete the line
+                lines.RemoveAt(index);
+            }
+            else
+            {
+                // Otherwise, update the line with the new reservation data
+                lines[index] = $"{reservation.ReservationCode},{reservation.PassengerName}, {reservation.Citizenship},  {reservation.FlightCode}, {reservation.Airline},{reservation.To},{reservation.From},{reservation.Day},{reservation.Hour},{reservation.Maxseats},{reservation.Price}";
+            }
+        }
+        File.WriteAllLines(filePath, lines);
+
+      
+    }
+
+
+    private class Airport
+    {
+        public string Airline { get; set; }
+
+    }
+    private class booking
+    {
+        public string ReservationCode { get; set; }
+        public string PassengerName { get; set; }
+        public string Citizenship { get; set; }
+        public String FlightCode { get; set; }
+        public string Airline { get; set; }
+        public string To { get; set; }
+        public string From { get; set; }
+        public string Day { get; set; }
+        public string Hour { get; set; }
+        public int Maxseats { get; set; }
+        public double Price { get; set; }
+        public string Status { get; set; }
+
+
+    }
+   
+}

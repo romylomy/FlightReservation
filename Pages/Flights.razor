@@ -1,0 +1,311 @@
+﻿@page "/flights"
+@using FlightReservation.Data
+@using CsvHelper;
+@using System.IO;
+@using System.Globalization;
+
+
+<!-- Displaying the flight finder section with dropdown menus for selecting destination, origin, and day of flight, and a button for finding flights -->
+<div class="d-flex justify-content-center">
+    <h3>Flight Finder</h3>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <label for="to-select" class="form-label d-block">To:</label>
+            <select id="to-select" @bind="selectedTo" class="form-select d-block">
+                <option value="">--Select destination--</option>
+                @foreach (var airport in airports)
+                {
+                    <option value="@airport.Code">@airport.Code - @airport.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="from-select" class="form-label d-block">From:</label>
+            <select id="from-select" @bind="selectedFrom" class="form-select d-block">
+                <option value="">--Select origin--</option>
+                @foreach (var airport in airports)
+                {
+                    <option value="@airport.Code">@airport.Code - @airport.Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="day-select" class="form-label d-block">Day:</label>
+            <select id="day-select" @bind="selectedDay" class="form-select d-block">
+                <option value="">--Select the day of flight--</option>
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+                <option value="Saturday">Saturday</option>
+                <option value="Sunday">Sunday</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <button @onclick="findFlights">Find Flights</button>
+        </div>
+    </div>
+    <!--     Displaying the available flights based on the user's selected destination, origin, and day of flight -->
+   <div class="column">
+        <div class="col-md-4">
+            <label for="from-select" class="form-label d-block">Available Flights</label>
+            <select id="from-select" @bind="ClientFlightSelection" @onclick="ParseString" class="form-select d-block">
+            <option value="">--Flights--</option>
+            @foreach (var flight in flights.Where(f => f.To == selectedTo && f.From == selectedFrom && f.Day == selectedDay))
+            {
+                <option>@flight.FlightCode, @flight.Airline, @flight.From, @flight.To, @flight.Day, @flight.Hour,@flight.Maxseats, @flight.Price</option>
+            }
+            </select>
+        </div>
+   </div>
+    <!--Displaying the flight reservation section with fields for entering passenger name and citizenship, and a button for reserving the selected flight-->
+   <div>
+    <label for="flight-code">Flight Code:</label>
+    <input type="text" id="flight-code" class="form-control" value="@textflightcode" readonly />
+
+    <label for="flight-Airline">Airline:</label>
+    <input type="text" id="flight-Airline" class="form-control" value="@textAirline" readonly />
+
+    <label for="flight-day">Day:</label>
+    <input type="text" id="flight-day" class="form-control" value="@textDay" readonly />
+
+    <label for="flight-time">Time:</label>
+    <input type="text" id="flight-time" class="form-control" value="@texthour" readonly />
+
+    <label for="flight-cost">Cost:</label>
+    <input type="text" id="flight-cost" class="form-control" value="@textcost" readonly />
+
+    <label for="name">Name:</label>
+    <input type="text" id="name" class="form-control" @bind="@PassengerName" />
+
+    <label for="citizenship">Citizenship:</label>
+    <input type="text" id="citizenship" class="form-control" @bind="@Citizenship" />
+    <button @onclick="Reserve">Reserve</button>
+
+
+  </div>
+  <div class="d-flex justify-content-center">
+        <label for="flight-cost">Reservation Code:</label>
+  </div>
+  <div class="d-flex justify-content-center">
+        <input type="text" id="flight-cost" class="form-control" value="@reservationCode" readonly />
+  </div>
+
+
+
+ 
+
+</div>
+
+@code {
+
+    private string code;
+    private List<Airport> airports;
+    private List<Flight> flights = new();
+    private string ClientFlightSelection;
+    private string textflightcode; 
+    private string textAirline;
+    private string textTo; 
+    private string textFrom; 
+    private string textDay;
+    private string texthour;
+    private string textcost;
+    private string textMaxseats; 
+    private string Citizenship; 
+    private string PassengerName;
+    private string reservationCode;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        airports = new List<Airport>();
+
+        try
+        {
+            using (var reader = new StreamReader(@"C:\Users\user\Desktop\Updated_Assignment 2- Event Driven Applications and Exception Handling\airports.csv"))
+            {
+                while (!reader.EndOfStream)
+                {
+                    var line = await reader.ReadLineAsync();
+                    var values = line.Split(',');
+
+                    airports.Add(new Airport
+                    {
+                        Code = values[0],
+                        Name = values[1]
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+    private async Task findFlights()
+    {
+        flights = new List<Flight>();
+
+        try
+        {
+            using (var reader = new StreamReader(@"C:\Users\user\Desktop\Updated_Assignment 2- Event Driven Applications and Exception Handling\flights.csv"))
+            {
+                while (!reader.EndOfStream)
+                {
+                    var line = await reader.ReadLineAsync();
+                    var values = line.Split(',');
+                    flights.Add(new Flight
+                        {
+                            FlightCode = values[0],
+                            Airline = values[1],
+                            To= values[2],
+                            From = values[3],
+                            Day= values[4],
+                            Hour = values[5],
+                            Maxseats = int.Parse(values[6]),
+                            Price = double.Parse(values[7])
+
+
+                        });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+    }
+
+    private void ParseString()
+    {
+        if (!string.IsNullOrEmpty(ClientFlightSelection))
+        {
+            // Split the input string by comma
+            var parts = ClientFlightSelection.Split(',');
+
+            // Get the flight number and to airport
+            textflightcode = parts[0];
+            textAirline= parts[1];
+            textTo = parts[2];
+            textFrom = parts[3];
+            textDay = parts[4];
+            texthour = parts[5];
+            textMaxseats = parts[6];
+            textcost = parts[7];
+
+        }
+    }
+
+    private bool CheckCodeExists(string code)
+    {
+        // TODO: Check if the code already exists in the system (e.g. in a database)
+        // Example code that always returns false
+        return false;
+    }
+    private void Reserve()
+    {
+        // Generates random code in the format LDDDD
+        string GenerateReservationCode()
+        {
+            const string letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            const string digits = "0123456789";
+
+            Random random = new Random();
+            char letter = letters[random.Next(letters.Length)];
+            string digitsPart = new string(Enumerable.Range(0, 4).Select(_ => digits[random.Next(digits.Length)]).ToArray());
+
+            return $"{letter}{digitsPart}";
+        }
+
+        reservationCode = GenerateReservationCode(); 
+
+        Reservation reservation = new Reservation
+            {   
+                ReservationCode = reservationCode,
+                PassengerName = PassengerName,
+                Citizenship = Citizenship,
+                FlightCode = textflightcode,
+                Airline = textAirline,
+                To = textTo,
+                From = textFrom,
+                Day = textDay,
+                Hour = texthour,
+                Maxseats = int.Parse(textMaxseats),
+                Price = double.Parse(textcost)
+             
+               
+            };
+        // Create a string representing the reservation data to write to the CSV file
+        string reservationData = $"{reservation.ReservationCode},{reservation.PassengerName},{reservation.Citizenship},{reservation.FlightCode},{reservation.Airline},{reservation.To},{reservation.From},{reservation.Day},{reservation.Hour},{reservation.Maxseats},{reservation.Price}";
+
+        // Create the CSV file if it does not exist
+        string filePath = @"C:\Users\user\Desktop\Updated_Assignment 2- Event Driven Applications and Exception Handling\reservations.csv";
+        if (!File.Exists(filePath))
+        {
+            using (StreamWriter sw = File.CreateText(filePath))
+            {
+                sw.WriteLine("ReservationCode,PassengerName,Citizenship,FlightCode,Airline,To,From,Day,Hour,Maxseats,Price");
+            }
+        }
+
+        // Append the reservation data to the CSV file
+        using (StreamWriter sw = File.AppendText(filePath))
+        {
+            sw.WriteLine(reservationData);
+        }
+    }
+
+
+    private class Airport
+    {
+        public string Code { get; set; }
+        public string Name { get; set; }
+    }
+    private class Flight
+
+    {   
+
+        public String FlightCode{ get; set; }
+        public string Airline{ get; set; }
+        public string To { get; set; }
+        public string From { get; set; }
+        public string Day { get; set; }
+        public string Hour{ get; set; }
+        public int Maxseats { get; set; }
+        public double Price { get; set; }
+
+        public override string ToString()
+        {
+            return $"Flight {FlightCode} operated by {Airline} from {From} to {To} at {Hour}. Maximum number of seats: {Maxseats}. Price: {Price:C}";
+        }
+
+    }
+    private class Reservation
+    {
+        public string ReservationCode { get; set; }
+        public string PassengerName { get; set; }
+        public string Citizenship { get; set; }
+        public String FlightCode{ get; set; }
+        public string Airline{ get; set; }
+        public string To { get; set; }
+        public string From { get; set; }
+        public string Day { get; set; }
+        public string Hour{ get; set; }
+        public int Maxseats { get; set; }
+        public double Price { get; set; }        
+
+
+    }
+
+    
+    private string selectedFrom = "";
+    private string selectedTo = "";
+    private string selectedDay = "";
+    
+  
+    
+}
