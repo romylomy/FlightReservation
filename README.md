@@ -1,4 +1,4 @@
-##FlightReservation
+# FlightReservation
 
 This project implements a Flight Reservation System, allowing customers to search for available flights based on destination, origin, and day of flight, and reserve their desired flights.While also having an admin side system with CRUD implementation built using .NETMAUI Framework.
 
